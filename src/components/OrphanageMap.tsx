@@ -2,6 +2,9 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { MapPin, Navigation, Search } from 'lucide-react';
+import { Label } from '@/components/ui/label';
 
 // Données fictives des orphelinats pour démonstration
 const orphanageData = [
@@ -28,6 +31,22 @@ const orphanageData = [
     address: "Rue des Palmiers, Port-Gentil",
     children: 35,
     needs: ["Nourriture", "Ordinateurs", "Livres"]
+  },
+  {
+    id: 4,
+    name: "Maison d'Espérance",
+    location: { lat: -1.6312, lng: 13.5772 }, // Franceville, Gabon
+    address: "Boulevard Central, Franceville",
+    children: 22,
+    needs: ["Vêtements", "Médicaments", "Matériel scolaire"]
+  },
+  {
+    id: 5,
+    name: "Centre Saint-Joseph",
+    location: { lat: 1.5983, lng: 11.5799 }, // Oyem, Gabon
+    address: "Rue des Églises, Oyem",
+    children: 30,
+    needs: ["Nourriture", "Lits", "Vêtements"]
   }
 ];
 
@@ -37,6 +56,10 @@ const OrphanageMap = () => {
   const [selectedOrphanage, setSelectedOrphanage] = useState<any>(null);
   const [mapInputVisible, setMapInputVisible] = useState(false);
   const [mapApiKey, setMapApiKey] = useState("");
+  const [searchDistance, setSearchDistance] = useState(50); // Distance de recherche en km
+  const [userLocation, setUserLocation] = useState<{lat: number, lng: number} | null>(null);
+  const [nearbyOrphanages, setNearbyOrphanages] = useState(orphanageData);
+  const [searchCity, setSearchCity] = useState("");
 
   useEffect(() => {
     // Ici, nous simulons le chargement de la carte car elle nécessiterait une clé API de service de cartographie
@@ -60,8 +83,43 @@ const OrphanageMap = () => {
   };
 
   const getNearbyOrphanages = () => {
-    // Simulation de géolocalisation - retourne tous les orphelinats pour la démo
+    // Simulation de géolocalisation - filtrer les orphelinats par ville ou retourner tous
+    if (searchCity) {
+      return orphanageData.filter(orphanage => 
+        orphanage.address.toLowerCase().includes(searchCity.toLowerCase())
+      );
+    }
     return orphanageData;
+  };
+
+  const getUserLocation = () => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const location = {
+            lat: position.coords.latitude,
+            lng: position.coords.longitude
+          };
+          setUserLocation(location);
+          
+          // Dans un cas réel, nous calculerions la distance entre l'utilisateur et chaque orphelinat
+          // Pour cette démo, nous simulons simplement la fonctionnalité
+          const filtered = orphanageData.filter((_, index) => index < 3); // Simule 3 orphelinats proches
+          setNearbyOrphanages(filtered);
+        },
+        (error) => {
+          console.error("Erreur de géolocalisation:", error);
+          alert("Impossible d'obtenir votre position. Veuillez autoriser l'accès à votre localisation ou rechercher par ville.");
+        }
+      );
+    } else {
+      alert("La géolocalisation n'est pas prise en charge par votre navigateur.");
+    }
+  };
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    setNearbyOrphanages(getNearbyOrphanages());
   };
 
   return (
@@ -98,6 +156,55 @@ const OrphanageMap = () => {
       
       {mapLoaded && (
         <div className="space-y-6">
+          <div className="bg-white p-4 rounded-lg shadow-sm mb-4">
+            <h3 className="text-lg font-semibold mb-3">Rechercher des orphelinats</h3>
+            <div className="flex flex-col md:flex-row gap-4">
+              <div className="flex-grow">
+                <form onSubmit={handleSearch} className="flex gap-2">
+                  <div className="flex-grow">
+                    <Input
+                      type="text"
+                      placeholder="Rechercher par ville..."
+                      value={searchCity}
+                      onChange={(e) => setSearchCity(e.target.value)}
+                      className="w-full"
+                    />
+                  </div>
+                  <Button type="submit" className="bg-gabon-green hover:bg-gabon-green/90">
+                    <Search className="w-4 h-4 mr-1" />
+                    Rechercher
+                  </Button>
+                </form>
+              </div>
+              <div>
+                <Button 
+                  onClick={getUserLocation} 
+                  variant="outline" 
+                  className="w-full md:w-auto border-gabon-green text-gabon-green hover:bg-gabon-green/10"
+                >
+                  <Navigation className="w-4 h-4 mr-2" />
+                  À proximité
+                </Button>
+              </div>
+            </div>
+            
+            {userLocation && (
+              <div className="mt-3 flex items-center">
+                <Label className="mr-2">Distance:</Label>
+                <input
+                  type="range"
+                  min="5"
+                  max="100"
+                  step="5"
+                  value={searchDistance}
+                  onChange={(e) => setSearchDistance(parseInt(e.target.value))}
+                  className="flex-grow"
+                />
+                <span className="ml-2">{searchDistance} km</span>
+              </div>
+            )}
+          </div>
+
           <div className="relative rounded-lg overflow-hidden bg-gray-100 h-64 md:h-96 border shadow-sm">
             {/* Carte simulée avec un gradient aux couleurs du Gabon */}
             <div className="absolute inset-0 bg-gradient-to-b from-gabon-green/20 via-gabon-yellow/20 to-gabon-blue/20">
@@ -105,7 +212,35 @@ const OrphanageMap = () => {
                 <h3 className="text-sm font-medium text-gray-700">Carte des Orphelinats au Gabon</h3>
               </div>
               
-              {orphanageData.map((orphanage) => (
+              {/* Marqueur de position de l'utilisateur si disponible */}
+              {userLocation && (
+                <div
+                  className="absolute transform -translate-x-1/2 -translate-y-1/2 z-30"
+                  style={{ 
+                    top: `${50 + (userLocation.lat * 10)}%`, 
+                    left: `${50 + (userLocation.lng - 9) * 20}%`
+                  }}
+                >
+                  <div className="w-4 h-4 rounded-full bg-blue-500 border-2 border-white pulse-animation">
+                    <span className="sr-only">Votre position</span>
+                  </div>
+                </div>
+              )}
+              
+              {/* Cercle de recherche autour de l'utilisateur */}
+              {userLocation && (
+                <div
+                  className="absolute transform -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-blue-400 bg-blue-100/20 z-20"
+                  style={{ 
+                    top: `${50 + (userLocation.lat * 10)}%`, 
+                    left: `${50 + (userLocation.lng - 9) * 20}%`,
+                    width: `${searchDistance * 1.5}px`,
+                    height: `${searchDistance * 1.5}px`,
+                  }}
+                ></div>
+              )}
+              
+              {nearbyOrphanages.map((orphanage) => (
                 <div
                   key={orphanage.id}
                   className={`absolute transform -translate-x-1/2 -translate-y-1/2 cursor-pointer transition-all ${
@@ -150,9 +285,15 @@ const OrphanageMap = () => {
           </div>
 
           <div>
-            <h3 className="text-xl font-semibold mb-3">Orphelinats à proximité</h3>
+            <h3 className="text-xl font-semibold mb-3">
+              {userLocation 
+                ? `Orphelinats à moins de ${searchDistance} km` 
+                : searchCity 
+                  ? `Orphelinats à ${searchCity}` 
+                  : "Tous les orphelinats"}
+            </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {getNearbyOrphanages().map((orphanage) => (
+              {nearbyOrphanages.map((orphanage) => (
                 <Card key={orphanage.id} className="orphanage-card">
                   <CardContent className="p-4">
                     <h4 className="font-semibold text-lg">{orphanage.name}</h4>

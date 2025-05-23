@@ -10,6 +10,7 @@ import Alerts from "./pages/Alerts";
 import Donate from "./pages/Donate";
 import OrphanageDetail from "./pages/OrphanageDetail";
 import NotFound from "./pages/NotFound";
+import DonorSpace from "./pages/DonorSpace";
 
 const queryClient = new QueryClient();
 
@@ -25,6 +26,7 @@ const App = () => (
           <Route path="/alerts" element={<Alerts />} />
           <Route path="/donate" element={<Donate />} />
           <Route path="/orphanage/:id" element={<OrphanageDetail />} />
+          <Route path="/donor" element={<DonorSpace />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
