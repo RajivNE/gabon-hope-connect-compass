@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
@@ -256,7 +255,10 @@ const Alerts = () => {
                     </p>
                     <Button 
                       variant="outline"
-                      onClick={() => document.querySelector('button[value="list"]')?.click()}
+                      onClick={() => {
+                        const listButton = document.querySelector('button[value="list"]') as HTMLButtonElement;
+                        if (listButton) listButton.click();
+                      }}
                     >
                       Retour à la liste
                     </Button>
