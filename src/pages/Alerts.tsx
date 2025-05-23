@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
@@ -79,8 +80,8 @@ const alertsData: AlertProps[] = [
 
 const Alerts = () => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [categoryFilter, setCategoryFilter] = useState('');
-  const [urgencyFilter, setUrgencyFilter] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState('all');
+  const [urgencyFilter, setUrgencyFilter] = useState('all');
   
   // Filtrage des alertes
   const filteredAlerts = alertsData.filter(alert => {
@@ -90,10 +91,10 @@ const Alerts = () => {
        alert.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
        alert.orphanageName.toLowerCase().includes(searchTerm.toLowerCase())) &&
       // Filtre par catégorie
-      (categoryFilter === '' || 
+      (categoryFilter === 'all' || 
        alert.categories.some(cat => cat.toLowerCase() === categoryFilter.toLowerCase())) &&
       // Filtre par urgence
-      (urgencyFilter === '' || alert.urgency === urgencyFilter)
+      (urgencyFilter === 'all' || alert.urgency === urgencyFilter)
     );
   });
 
@@ -153,7 +154,7 @@ const Alerts = () => {
                   <SelectValue placeholder="Catégorie" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Toutes les catégories</SelectItem>
+                  <SelectItem value="all">Toutes les catégories</SelectItem>
                   <SelectItem value="Médicaments">Médicaments</SelectItem>
                   <SelectItem value="Santé">Santé</SelectItem>
                   <SelectItem value="Bénévoles">Bénévoles</SelectItem>
@@ -170,7 +171,7 @@ const Alerts = () => {
                   <SelectValue placeholder="Niveau d'urgence" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Tous les niveaux</SelectItem>
+                  <SelectItem value="all">Tous les niveaux</SelectItem>
                   <SelectItem value="low">Normal</SelectItem>
                   <SelectItem value="medium">Important</SelectItem>
                   <SelectItem value="high">Urgent</SelectItem>
@@ -181,8 +182,8 @@ const Alerts = () => {
                 className="md:ml-auto"
                 onClick={() => {
                   setSearchTerm('');
-                  setCategoryFilter('');
-                  setUrgencyFilter('');
+                  setCategoryFilter('all');
+                  setUrgencyFilter('all');
                 }}
               >
                 Réinitialiser
@@ -212,23 +213,23 @@ const Alerts = () => {
                       <div className="flex items-center justify-between mb-4">
                         <div className="flex items-center gap-2">
                           <span className="text-gray-600">{filteredAlerts.length} alertes</span>
-                          {categoryFilter && (
+                          {categoryFilter !== 'all' && (
                             <Badge variant="outline" className="flex items-center gap-1">
                               {categoryFilter}
                               <button 
                                 className="ml-1 text-gray-500 hover:text-gray-800" 
-                                onClick={() => setCategoryFilter('')}
+                                onClick={() => setCategoryFilter('all')}
                               >
                                 ×
                               </button>
                             </Badge>
                           )}
-                          {urgencyFilter && (
+                          {urgencyFilter !== 'all' && (
                             <Badge variant="outline" className="flex items-center gap-1">
                               {urgencyFilter === 'high' ? 'Urgent' : urgencyFilter === 'medium' ? 'Important' : 'Normal'}
                               <button 
                                 className="ml-1 text-gray-500 hover:text-gray-800" 
-                                onClick={() => setUrgencyFilter('')}
+                                onClick={() => setUrgencyFilter('all')}
                               >
                                 ×
                               </button>
